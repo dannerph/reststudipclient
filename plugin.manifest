@@ -1,0 +1,5 @@
+pluginname=API-Test
+pluginclassname=StudIP-Sync-Framework-Core
+origin=StudIP Sync Client
+version=0.1a
+studipMinVersion=3.1
