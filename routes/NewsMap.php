@@ -13,7 +13,7 @@
  * @category    Stud.IP
  * @package     ExtendedNews
  */
-class CardMap extends RESTAPI\RouteMap {
+class NewsMap extends RESTAPI\RouteMap {
 
     /**
      * Validates a user until a given date
@@ -87,4 +87,3 @@ class CardMap extends RESTAPI\RouteMap {
     }
 
 }
-
