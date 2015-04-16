@@ -20,10 +20,53 @@ class SSFCoreMap extends RESTAPI\RouteMap {
     //************************************************************************//
 
     /**
-     * Cheks for changes of Document after timestamp ind the current users
+     * Cheks for changes of Document after timestamp and the current users
      * courses. Return either an empty json or a tree over semester (root node),
      * courses, folders, subfolders [...], Metadata of documents changed after
      * timestamp
+     *
+     * example tree:
+     * {
+     *   "semester_id" : null,
+     *   "title" : null,
+     *   "description" : null,
+     *   "begin" : 0,
+     *   "end" : 0,
+     *   "seminars_begin" : 0,
+     *   "seminars_end" : 0,
+     *   "courses" : [ {
+     *     "folders" : [ {
+     *       "folder_id" : null,
+     *       "user_id" : null,
+     *       "name" : null,
+     *       "mkdate" : 0,
+     *       "chdate" : 0,
+     *       "description" : null,
+     *       "permissions" : null,
+     *       "subfolders" : [ ],
+     *       "files" : [ {
+     *         "document_id" : null,
+     *         "user_id" : null,
+     *         "name" : null,
+     *         "description" : null,
+     *         "mkdate" : null,
+     *         "chdate" : null,
+     *         "filename" : null,
+     *         "filesize" : null,
+     *         "mime_type" : null,
+     *         "protected" : null
+     *       } ]
+     *     } ],
+     *     "course_id" : null,
+     *     "course_nr" : null,
+     *     "institute_name" : null,
+     *     "title" : null,
+     *     "subtitle" : null,
+     *     "description" : null,
+     *     "color" : null,
+     *     "type" : 0
+     *   } ]
+     * }
      *
      * @get /ssf-core/documenttree/
      * @get /ssf-core/documenttree/:timestamp
