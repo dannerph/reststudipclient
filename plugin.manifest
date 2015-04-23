@@ -1,5 +1,5 @@
 pluginname=SSF-Core API
-pluginclassname=SSF-Core
+pluginclassname=SSF_Core
 origin=StudIP Sync Client
 version=0.1a
 studipMinVersion=3.1
