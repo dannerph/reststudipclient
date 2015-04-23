@@ -10,7 +10,7 @@ require 'bootstrap.php';
  * @version 0.1a
  */
 
-class StudIP-Sync-Framework-Core extends StudIPPlugin implements RESTAPIPlugin {
+class SSF-Core extends StudIPPlugin implements RESTAPIPlugin {
 
     /**
      * Load REST Routes
