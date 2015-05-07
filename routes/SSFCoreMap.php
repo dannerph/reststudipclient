@@ -75,6 +75,34 @@ class SSFCoreMap extends RESTAPI\RouteMap {
         if($timestamp === null){
             // return whole tree with root of the current semester
         }
+        foreach (Course::findBySQL("JOIN seminar_user USING (Seminar_id) WHERE user_id = ?", array($GLOBALS['user']->id)) as $course) {
+            $result = array(
+"course_id" => $course->id,
+"course_nr" => $course->VeranstaltungsNummer,
+"title" => $course->name
+                );
+            foreach (DocumentFolder::findBySeminar_id($course->id) as $folder) {
+                $result['folders'][] = $this->parseFolder($folder);
+            }
+            $output[$course->start_semester->id][] = $result;
+        }
+        return $output;
+    }
+
+    private function parseFolder($folder) {
+
+$result['folder_id'] = $folder->id; 
+
+
+//parse subfolders
+        foreach (DocumentFolder::findByRange_id($folder->id) as $folder) {
+$result['subfolders'][] = $this->parseFolder($folder);
+        }
+
+        foreach (StudipDocument::findByRange_id($folder->id) as $file) {
+$result['files'][] = array("document_id" => $file->id);
+        }
+        return $result;
     }
     
     //************************************************************************//

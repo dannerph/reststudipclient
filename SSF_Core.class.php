@@ -23,8 +23,8 @@ class SSF_Core extends StudIPPlugin implements RESTAPIPlugin {
         $this->setupAutoload();
 
         // Return CardMap
-        require_once 'routes/NewsMap.php';
-        return new NewsMap();
+        require_once 'routes/SSFCoreMap.php';
+        return new SSFCoreMap();
     }
 
     /**
