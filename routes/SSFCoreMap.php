@@ -77,9 +77,9 @@ class SSFCoreMap extends RESTAPI\RouteMap {
         }
         foreach (Course::findBySQL("JOIN seminar_user USING (Seminar_id) WHERE user_id = ?", array($GLOBALS['user']->id)) as $course) {
             $result = array(
-"course_id" => $course->id,
-"course_nr" => $course->VeranstaltungsNummer,
-"title" => $course->name
+				"course_id" => $course->id,
+				"course_nr" => $course->VeranstaltungsNummer,
+				"title" => $course->name
                 );
             foreach (DocumentFolder::findBySeminar_id($course->id) as $folder) {
                 $result['folders'][] = $this->parseFolder($folder);
@@ -103,6 +103,166 @@ $result['subfolders'][] = $this->parseFolder($folder);
 $result['files'][] = array("document_id" => $file->id);
         }
         return $result;
+    }
+    
+    /**
+     * This route returns an array of semesters of current user.
+     *
+     *	TODO: only semesters of the user, not all
+     *
+     * @get /ssf-core/semesters/
+     */
+    public function getSemesters() {
+    	
+    	$output = array();
+    	
+    	foreach ( Semester::getAll() as $semester ) {
+			$result = array (
+					"semester_id" => $semester->id,
+					"semester_name" => $semester->name
+					//"course_nr" => $course->VeranstaltungsNummer,
+					//"title" => $course->name,
+					//"subtitle" => $course->untertitel,
+					//"description" => $course->beschreibung 
+			);
+			$output [] = $result;
+		}
+    	
+    	return $output;
+    }
+    
+    /**
+     * This route returns an array of courses of the specified semester.
+     *
+     * @get /ssf-core/courses/:semester_id
+     */
+    public function getCourses($semester_id = null) {
+    	
+    	$output = array();
+    	
+		foreach ( Course::findBySQL ( "JOIN seminar_user USING (Seminar_id) WHERE user_id = ?", array (
+				$GLOBALS ['user']->id 
+		) ) as $course ) {
+			if ($course->start_semester->id == $semester_id) {
+				$result = array (
+						"course_id" => $course->id,
+						"course_nr" => $course->VeranstaltungsNummer,
+						"title" => $course->name,
+						"subtitle" => $course->untertitel,
+						"description" => $course->beschreibung 
+				);
+				$output [] = $result;
+			}
+		}
+		
+		return $output;
+	}
+    
+    /**
+     * This route returns an array of folders of the specified course.
+     *
+     * TODO: AND range_id = seminar_id not correct, only for "Allgemeiner Ordner"
+     *
+     * @get /ssf-core/folders/:course_id
+     */
+    public function getFolders($course_id = null) {
+    	
+    	$output = array();
+    	
+    	// Allgemeine Ordner
+    	$general_folders = DocumentFolder::findBySQL ("seminar_id = ? AND range_id = seminar_id", array (
+    			$course_id));
+    	
+    	// TODO: new top folder, do some magic?
+    	//$new_top_folders = DocumentFolder::findBySQL ("seminar_id = ? AND range_id IN (?, MD5(CONCAT(?, 'top_folder')))", array (
+    	//		$course_id, "76ed43ef286fb55cf9e41beadb484a9f","76ed43ef286fb55cf9e41beadb484a9f"));
+    	
+    	//return md5('ad8dc6a6162fb0fe022af4a62a15e309'.'top_folder');
+    	
+    	// statusgruppen Ordner
+    	$statusgruppen_folders = DocumentFolder::findBySQL ("JOIN statusgruppe_user ON (statusgruppe_id = range_id) WHERE seminar_id = ? AND statusgruppe_user.user_id = ?", array (
+				$course_id,$GLOBALS ['user']->id));
+    	
+		// themen folder
+    	$themen_folders = DocumentFolder::findBySQL ("JOIN themen ON (issue_id = range_id) WHERE range_id = issue_id AND folder.seminar_id = ?", array (
+    			$course_id));
+    	
+    	$folders = array_merge_recursive($general_folders, $statusgruppen_folders, $themen_folders, $new_top_folders);
+    	
+    	
+    	foreach ( $folders as $folder ) {
+			
+			$result = array (
+					"folder_id" => $folder->id,
+					"user_id" => $folder->user_id,
+					"name" => $folder->name,
+					"mkdate" => $folder->mkdate,
+					"chdate" => $folder->chdate,
+					"description" => $folder->description?:'',
+					"permissions" => $folder->permission
+			);
+			$result['permissions'] = $folder->getPermissions();
+			$output [] = $result;
+		}
+    	
+    	return $output;
+    }
+    
+    /**
+     * This route returns an array of subfolders of the specified folder.
+     *
+     * @get /ssf-core/subfolders/:folder_id
+     */
+    public function getSubFolders($folder_id = null) {
+
+    	$output = array();
+    	
+    	foreach ( DocumentFolder::findBySQL ( "range_id = ?", array (
+				$folder_id
+		) ) as $folder ) {
+			
+			$result = array (
+					"folder_id" => $folder->id,
+					"user_id" => $folder->user_id,
+					"name" => $folder->name,
+					"mkdate" => $folder->mkdate,
+					"chdate" => $folder->chdate,
+					"description" => $folder->description?:'',
+					"permissions" => $folder->permission
+			);
+			$result['permissions'] = $folder->getPermissions();
+			$output [] = $result;
+		}
+    	
+    	return $output;
+    }
+    
+    /**
+     * This route returns an array of documents (only meta data) of the specified folder.
+     *
+     * @get /ssf-core/documents/:folder_id
+     */
+    public function getDocuments($folder_id = null) {
+    	
+    	$output = array();
+    	
+    	foreach (StudipDocument::findByRange_id($folder_id) as $file) {
+			$result = array (
+					"document_id" => $file->id,
+     				"user_id" => $file->user_id,
+     				"name" => $file->name,
+     				"description" => $file->description?:'',
+     				"mkdate" => $file->mkdate,
+     				"chdate" => $file->chdate,
+     				"filename" => $file->filename,
+     				"filesize" => $file->filesize,
+    				"mime_type" => get_mime_type($file->filename),
+     				"protected" => $file->protected
+			);
+			$output [] = $result;
+		}
+    	
+    	return $output;
     }
     
     //************************************************************************//
