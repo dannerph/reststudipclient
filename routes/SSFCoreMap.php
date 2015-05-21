@@ -119,11 +119,12 @@ $result['files'][] = array("document_id" => $file->id);
     	foreach ( Semester::getAll() as $semester ) {
 			$result = array (
 					"semester_id" => $semester->id,
-					"semester_name" => $semester->name
-					//"course_nr" => $course->VeranstaltungsNummer,
-					//"title" => $course->name,
-					//"subtitle" => $course->untertitel,
-					//"description" => $course->beschreibung 
+					"title" => $semester->name,
+					"description" => $semester->description,
+					"begin" => $semester->beginn,
+					"end" => $semester->ende,
+					"seminars_begin" => $semester->vorles_beginn,
+					"seminars_end" => $semester->vorles_ende
 			);
 			$output [] = $result;
 		}
@@ -174,8 +175,8 @@ $result['files'][] = array("document_id" => $file->id);
     			$course_id));
     	
     	// TODO: new top folder, do some magic?
-    	//$new_top_folders = DocumentFolder::findBySQL ("seminar_id = ? AND range_id IN (?, MD5(CONCAT(?, 'top_folder')))", array (
-    	//		$course_id, "76ed43ef286fb55cf9e41beadb484a9f","76ed43ef286fb55cf9e41beadb484a9f"));
+    	$new_top_folders = DocumentFolder::findBySQL ("seminar_id = ? AND range_id IN (?, MD5(CONCAT(?, 'top_folder')))", array (
+    			$course_id, "76ed43ef286fb55cf9e41beadb484a9f","76ed43ef286fb55cf9e41beadb484a9f"));
     	
     	//return md5('ad8dc6a6162fb0fe022af4a62a15e309'.'top_folder');
     	
@@ -201,7 +202,16 @@ $result['files'][] = array("document_id" => $file->id);
 					"description" => $folder->description?:'',
 					"permissions" => $folder->permission
 			);
-			$result['permissions'] = $folder->getPermissions();
+			
+			$permissions = array();
+			foreach (array(1=>'visible', 'writable', 'readable', 'extendable') as $bit => $perm) {
+				if ($folder->permission & $bit) {
+					$permissions [$perm] = true;
+				} else {
+					$permissions [$perm] = false;
+				}
+			}
+			$result['permissions'] = $permissions;
 			$output [] = $result;
 		}
     	
@@ -230,7 +240,16 @@ $result['files'][] = array("document_id" => $file->id);
 					"description" => $folder->description?:'',
 					"permissions" => $folder->permission
 			);
-			$result['permissions'] = $folder->getPermissions();
+			
+			$permissions = array();
+			foreach (array(1=>'visible', 'writable', 'readable', 'extendable') as $bit => $perm) {
+				if ($folder->permission & $bit) {
+					$permissions [$perm] = true;
+				} else {
+					$permissions [$perm] = false;
+				}
+			}
+			$result['permissions'] = $permissions;
 			$output [] = $result;
 		}
     	
@@ -257,7 +276,7 @@ $result['files'][] = array("document_id" => $file->id);
      				"filename" => $file->filename,
      				"filesize" => $file->filesize,
     				"mime_type" => get_mime_type($file->filename),
-     				"protected" => $file->protected
+     				"protected" => ($file->protected === '0' ? false : true)
 			);
 			$output [] = $result;
 		}
