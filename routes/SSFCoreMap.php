@@ -13,6 +13,7 @@
  * @category    Stud.IP
  * @package     ExtendedNews
  */
+require_once 'lib/object.inc.php';
 class SSFCoreMap extends RESTAPI\RouteMap {
 	
 	// ************************************************************************//
@@ -204,6 +205,19 @@ class SSFCoreMap extends RESTAPI\RouteMap {
 		return $output;
 	}
 	
+	/**
+	 * This route sets the document as downloaded.
+	 *
+	 * @put /ssf-core/document/:document_id
+	 */
+	public function putDocuments($folder_id = null) {
+		if ($folder_id != null) {
+			object_set_visit ( $folder_id, 'documents', $GLOBALS ['user']->id );
+		}
+		$this->status ( 200 );
+		$this->body ( null );
+	}
+	
 	// ************************************************************************//
 	// Routes for news core plugin
 	// ************************************************************************//
@@ -211,20 +225,72 @@ class SSFCoreMap extends RESTAPI\RouteMap {
 	/**
 	 * Returns unread news of the current user
 	 * return value: array(id, topic, body, author (name), chdate, mkdate,
-	 * expire, .
-	 * ..)
+	 * expire)
 	 *
-	 * @get /ssf-core/unreadnews
+	 * valid ranges are: studip (system wide), institute, courses
+	 *
+	 * @get /ssf-core/news/:range
 	 */
-	public function getUnreadNews() {
+	public function getNews($range = null) {
+		$output = array ();
+		
+		$newslist = null;
+		$type = null;
+		
+		switch ($range) {
+			case 'studip' :
+				$newslist = StudipNews::findBySQL ( "JOIN news_range r USING (news_id) LEFT JOIN object_user_visits o ON (news_id = o.object_id) WHERE o.object_id IS NULL AND r.range_id = ? GROUP BY news_id", array (
+						'studip' 
+				) );
+				// $newslist = StudipNews::GetNewsByRange ( 'studip', true, true );
+				$type = 'studip';
+				break;
+			case 'institute' :
+				$newslist = StudipNews::findBySQL ( "JOIN news_range r USING (news_id) JOIN user_inst i ON (r.range_id = i.Institut_id) LEFT JOIN object_user_visits o ON (news_id = o.object_id) WHERE o.object_id IS NULL AND i.user_id = ? GROUP BY news_id", array (
+						$GLOBALS ['user']->id 
+				) );
+				$type = 'studip';
+				break;
+			case 'courses' :
+				$newslist = StudipNews::findBySQL ( "JOIN news_range r USING (news_id) JOIN seminare ON(Seminar_id = range_id) JOIN seminar_user s USING(Seminar_id) LEFT JOIN object_user_visits o ON (news_id = o.object_id) WHERE o.object_id IS NULL AND s.user_id = ? GROUP BY news_id", array (
+						$GLOBALS ['user']->id 
+				) );
+				$type = 'courses';
+				break;
+		}
+		
+		if ($newslist == null) {
+			return $output;
+		}
+		
+		foreach ( $newslist as $news ) {
+			$result = array (
+					"news_id" => $news->id,
+					"topic" => $news->topic,
+					"body" => $news->body,
+					"date" => $news->date,
+					"author" => $news->author,
+					"chdate" => $news->chdate,
+					"mkdate" => $news->mkdate,
+					"expire" => $news->expire,
+					"allow_comments" => $news->allow_comments,
+					"chdate_uid" => $news->chdate_uid 
+			);
+			$output [] = $result;
+		}
 		return $output;
 	}
 	
 	/**
-	 * Sets the news of the current user with the given new id $id to readed
+	 * Sets the news of the current user with the givenF news_id $news_id to readed (visisted)
 	 *
-	 * @put /ssf-core/setnewsreaded/:id
+	 * @put /ssf-core/setnews/:news_id
 	 */
-	public function setNewsReaded($id = null) {
+	public function putNews($news_id = null) {
+		if ($news_id != null) {
+			object_set_visit ( $news_id, 'news', $GLOBALS ['user']->id );
+		}
+		$this->status ( 200 );
+		$this->body ( null );
 	}
 }
