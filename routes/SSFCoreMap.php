@@ -1,14 +1,14 @@
 <?php
 
 /**
- * NewsMap.php - Restroutes for the StudIP Client plugin News
+ * SSFCoreMAP.php - Restroutes for the StudIP Client plugin News
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
  * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
  *
- * @author      Florian Bieringer <florian.bieringer@uni-passau.de>
+ * @author      Philipp Danner <philipp@danner-web.de>
  * @license     http://www.gnu.org/licenses/gpl-2.0.html GPL version 2
  * @category    Stud.IP
  * @package     ExtendedNews
@@ -223,9 +223,7 @@ class SSFCoreMap extends RESTAPI\RouteMap {
 	// ************************************************************************//
 	
 	/**
-	 * Returns unread news of the current user
-	 * return value: array(id, topic, body, author (name), chdate, mkdate,
-	 * expire)
+	 * Returns unread news of the current user as json object
 	 *
 	 * valid ranges are: studip (system wide), institute, courses
 	 *
@@ -267,7 +265,7 @@ class SSFCoreMap extends RESTAPI\RouteMap {
 			$result = array (
 					"news_id" => $news->id,
 					"topic" => $news->topic,
-					"body" => $news->body,
+					"body" => formatReady($news->body),
 					"date" => $news->date,
 					"author" => $news->author,
 					"chdate" => $news->chdate,
@@ -282,9 +280,9 @@ class SSFCoreMap extends RESTAPI\RouteMap {
 	}
 	
 	/**
-	 * Sets the news of the current user with the givenF news_id $news_id to readed (visisted)
+	 * Sets the news of the current user with the given $news_id to readed (visisted)
 	 *
-	 * @put /ssf-core/setnews/:news_id
+	 * @put /ssf-core/news/:news_id
 	 */
 	public function putNews($news_id = null) {
 		if ($news_id != null) {

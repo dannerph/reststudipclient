@@ -2,11 +2,11 @@
 require 'bootstrap.php';
 
 /**
- * Api-testPlugin.class.php
+ * SSF_Core.class.php
  *
  * ...
  *
- * @author  Philipp Danner
+ * @author      Philipp Danner <philipp@danner-web.de>
  * @version 0.1a
  */
 
