@@ -42,7 +42,6 @@ class SSFCoreMap extends RESTAPI\RouteMap {
 	 */
 	public function getDocumenttreeSingle($semester_id) {
 		$output = array ();
-		$semester = Semester::find ( $semester_id );
 		$output [] = $this->getDocumenttree ( $semester->id );
 		return $output;
 	}
