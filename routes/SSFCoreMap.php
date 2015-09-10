@@ -36,6 +36,18 @@ class SSFCoreMap extends RESTAPI\RouteMap {
 	}
 	
 	/**
+	 * This route returns a tree of all semesters with leafs: file and nodes: structure.
+	 *
+	 * @get /studip-client-core/documenttree/:semester_id
+	 */
+	public function getDocumenttreeSingle($semester_id) {
+		$output = array ();
+		$semester = Semester::find ( $semester_id );
+		$output [] = $this->getDocumenttree ( $semester->id );
+		return $output;
+	}
+	
+	/**
 	 * This route sets the document as downloaded.
 	 *
 	 * @put /studip-client-core/document/:document_id
@@ -129,18 +141,14 @@ class SSFCoreMap extends RESTAPI\RouteMap {
 	// ************************************************************************//
 	private function getDocumenttree($semesterId = null) {
 		$semester = Semester::find ( $semesterId );
-	
+		
 		$result = array (
 				"semester_id" => $semester->id,
 				"title" => $semester->name,
-				"description" => $semester->description,
-				"begin" => $semester->beginn,
-				"end" => $semester->ende,
-				"seminars_begin" => $semester->vorles_beginn,
-				"seminars_end" => $semester->vorles_ende
+				"description" => $semester->description 
 		);
-		$result["courses"]= $this->getCourses ( $semester->id );
-	
+		$result ["courses"] = $this->getCourses ( $semester->id );
+		
 		return $result;
 	}
 	private function getCourses($semester_id = null) {
@@ -154,8 +162,6 @@ class SSFCoreMap extends RESTAPI\RouteMap {
 						"course_id" => $course->id,
 						"course_nr" => $course->VeranstaltungsNummer,
 						"title" => $course->name,
-						"subtitle" => $course->untertitel,
-						"description" => $course->beschreibung,
 						"folders" => $this->getFolders ( $course->id ) 
 				);
 				$output [] = $result;
@@ -195,11 +201,9 @@ class SSFCoreMap extends RESTAPI\RouteMap {
 			
 			$result = array (
 					"folder_id" => $folder->id,
-					"user_id" => $folder->user_id,
 					"name" => $folder->name,
 					"mkdate" => $folder->mkdate,
 					"chdate" => $folder->chdate,
-					"description" => $folder->description ?  : '',
 					"permissions" => $folder->permission,
 					"subfolders" => $this->getSubFolders ( $folder->id ),
 					"files" => $this->getDocuments ( $folder->id ) 
@@ -233,11 +237,9 @@ class SSFCoreMap extends RESTAPI\RouteMap {
 			
 			$result = array (
 					"folder_id" => $folder->id,
-					"user_id" => $folder->user_id,
 					"name" => $folder->name,
 					"mkdate" => $folder->mkdate,
 					"chdate" => $folder->chdate,
-					"description" => $folder->description ?  : '',
 					"permissions" => $folder->permission,
 					"subfolders" => $this->getSubFolders ( $folder->id ),
 					"files" => $this->getDocuments ( $folder->id ) 
@@ -268,15 +270,12 @@ class SSFCoreMap extends RESTAPI\RouteMap {
 		foreach ( StudipDocument::findByRange_id ( $folder_id ) as $file ) {
 			$result = array (
 					"document_id" => $file->id,
-					"user_id" => $file->user_id,
 					"name" => $file->name,
-					"description" => $file->description ?  : '',
 					"mkdate" => $file->mkdate,
 					"chdate" => $file->chdate,
 					"filename" => $file->filename,
 					"filesize" => $file->filesize,
-					"mime_type" => get_mime_type ( $file->filename ),
-					"protected" => ($file->protected === '0' ? false : true) 
+					"mime_type" => get_mime_type ( $file->filename ) 
 			);
 			$output [] = $result;
 		}
