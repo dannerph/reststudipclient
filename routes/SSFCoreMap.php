@@ -274,6 +274,7 @@ class SSFCoreMap extends RESTAPI\RouteMap {
 					"chdate" => $file->chdate,
 					"filename" => $file->filename,
 					"filesize" => $file->filesize,
+					"protection" => $file->protected,
 					"mime_type" => get_mime_type ( $file->filename ) 
 			);
 			$output [] = $result;
