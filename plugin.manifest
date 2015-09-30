@@ -1,5 +1,5 @@
-pluginname=SSF-Core API
-pluginclassname=SSF_Core
-origin=StudIP Sync Client
-version=0.1a
-studipMinVersion=3.1
+pluginname=Stud.IP Client Core API
+pluginclassname=StudIPClientCoreApi
+origin=de.danner_web
+version=0.2
+studipMinVersion=3.0
