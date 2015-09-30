@@ -128,17 +128,26 @@ class SSFCoreMap extends RESTAPI\RouteMap {
 		return $result;
 	}
 	private function getCourses($semester_id = null) {
-		$course_to_json = function ($course) {
-			return array (
-					"course_id" => $course->id,
-					"course_nr" => $course->VeranstaltungsNummer,
-					"title" => $course->name,
-					"folders" => $this->getFolders ( $course->id ) 
-			);
+		$course_to_json = function ($course) use($semester_id) {
+			if ($course->start_semester->id == $semester_id) {
+				return array (
+						"course_id" => $course->id,
+						"course_nr" => $course->VeranstaltungsNummer,
+						"title" => $course->name,
+						"folders" => $this->getFolders ( $course->id ) 
+				);
+			}
 		};
-		return Course::findAndMapBySQL ( $course_to_json, "JOIN seminar_user USING (Seminar_id) WHERE user_id = ?", array (
+		$result = Course::findAndMapBySQL ( $course_to_json, "JOIN seminar_user USING (Seminar_id) WHERE user_id = ?", array (
 				$GLOBALS ['user']->id 
 		) );
+		
+		$output = array ();
+		foreach ( $result as $item ) {
+			if ($item != null)
+				$output[] = $item;
+		}
+		return $output;
 	}
 	private function getFolders($course_id = null) {
 		$folder_to_json = function ($folder) {
