@@ -26,13 +26,11 @@ class SSFCoreMap extends RESTAPI\RouteMap {
 	 * @get /studip-client-core/documenttree/
 	 */
 	public function getDocumenttreeAll() {
-		$output = array ();
-		foreach ( Semester::findBySQL ( "JOIN seminare v JOIN seminar_user USING (Seminar_id) WHERE user_id=? AND start_time <= ende AND start_time >=beginn GROUP BY semester_id", array (
+		return Semester::findAndMapBySQL ( function ($semester) {
+			return $this->getDocumenttree ( $semester->id );
+		}, "JOIN seminare v JOIN seminar_user USING (Seminar_id) WHERE user_id=? AND start_time <= ende AND start_time >=beginn GROUP BY semester_id", array (
 				$GLOBALS ['user']->id 
-		) ) as $semester ) {
-			$output [] = $this->getDocumenttree ( $semester->id );
-		}
-		return $output;
+		) );
 	}
 	
 	/**
@@ -41,9 +39,7 @@ class SSFCoreMap extends RESTAPI\RouteMap {
 	 * @get /studip-client-core/documenttree/:semester_id
 	 */
 	public function getDocumenttreeSingle($semester_id) {
-		$output = array ();
-		$output [] = $this->getDocumenttree ( $semester->id );
-		return $output;
+		return $output [] = $this->getDocumenttree ( $semester->id );
 	}
 	
 	/**
@@ -70,42 +66,11 @@ class SSFCoreMap extends RESTAPI\RouteMap {
 	 *
 	 * valid ranges are: studip (system wide), institute, courses
 	 *
-	 * @get /ssf-core/news/:range
+	 * @get /studip-client-core/news/:range
 	 */
 	public function getNews($range = null) {
-		$output = array ();
-		
-		$newslist = null;
-		$type = null;
-		
-		switch ($range) {
-			case 'studip' :
-				$newslist = StudipNews::findBySQL ( "JOIN news_range r USING (news_id) LEFT JOIN object_user_visits o ON (news_id = o.object_id) WHERE o.object_id IS NULL AND r.range_id = ? GROUP BY news_id", array (
-						'studip' 
-				) );
-				// $newslist = StudipNews::GetNewsByRange ( 'studip', true, true );
-				$type = 'studip';
-				break;
-			case 'institute' :
-				$newslist = StudipNews::findBySQL ( "JOIN news_range r USING (news_id) JOIN user_inst i ON (r.range_id = i.Institut_id) LEFT JOIN object_user_visits o ON (news_id = o.object_id) WHERE o.object_id IS NULL AND i.user_id = ? GROUP BY news_id", array (
-						$GLOBALS ['user']->id 
-				) );
-				$type = 'studip';
-				break;
-			case 'courses' :
-				$newslist = StudipNews::findBySQL ( "JOIN news_range r USING (news_id) JOIN seminare ON(Seminar_id = range_id) JOIN seminar_user s USING(Seminar_id) LEFT JOIN object_user_visits o ON (news_id = o.object_id) WHERE o.object_id IS NULL AND s.user_id = ? GROUP BY news_id", array (
-						$GLOBALS ['user']->id 
-				) );
-				$type = 'courses';
-				break;
-		}
-		
-		if ($newslist == null) {
-			return $output;
-		}
-		
-		foreach ( $newslist as $news ) {
-			$result = array (
+		$news_to_json = function ($news) {
+			return array (
 					"news_id" => $news->id,
 					"topic" => $news->topic,
 					"body" => formatReady ( $news->body ),
@@ -117,15 +82,28 @@ class SSFCoreMap extends RESTAPI\RouteMap {
 					"allow_comments" => $news->allow_comments,
 					"chdate_uid" => $news->chdate_uid 
 			);
-			$output [] = $result;
+		};
+		
+		switch ($range) {
+			case 'studip' :
+				return StudipNews::findAndMapBySQL ( $news_to_json, "JOIN news_range r USING (news_id) LEFT JOIN object_user_visits o ON (news_id = o.object_id) WHERE o.object_id IS NULL AND r.range_id = ? GROUP BY news_id", array (
+						'studip' 
+				) );
+			case 'institute' :
+				return StudipNews::findAndMapBySQL ( $news_to_json, "JOIN news_range r USING (news_id) JOIN user_inst i ON (r.range_id = i.Institut_id) LEFT JOIN object_user_visits o ON (news_id = o.object_id) WHERE o.object_id IS NULL AND i.user_id = ? GROUP BY news_id", array (
+						$GLOBALS ['user']->id 
+				) );
+			case 'courses' :
+				return StudipNews::findAndMapBySQL ( $news_to_json, "JOIN news_range r USING (news_id) JOIN seminare ON(Seminar_id = range_id) JOIN seminar_user s USING(Seminar_id) LEFT JOIN object_user_visits o ON (news_id = o.object_id) WHERE o.object_id IS NULL AND s.user_id = ? GROUP BY news_id", array (
+						$GLOBALS ['user']->id 
+				) );
 		}
-		return $output;
 	}
 	
 	/**
 	 * Sets the news of the current user with the given $news_id to readed (visisted)
 	 *
-	 * @put /ssf-core/news/:news_id
+	 * @put /studip-client-core/news/:news_id
 	 */
 	public function putNews($news_id = null) {
 		if ($news_id != null) {
@@ -140,7 +118,6 @@ class SSFCoreMap extends RESTAPI\RouteMap {
 	// ************************************************************************//
 	private function getDocumenttree($semesterId = null) {
 		$semester = Semester::find ( $semesterId );
-		
 		$result = array (
 				"semester_id" => $semester->id,
 				"title" => $semester->name,
@@ -151,89 +128,65 @@ class SSFCoreMap extends RESTAPI\RouteMap {
 		return $result;
 	}
 	private function getCourses($semester_id = null) {
-		$output = array ();
-		
-		foreach ( Course::findBySQL ( "JOIN seminar_user USING (Seminar_id) WHERE user_id = ?", array (
+		$course_to_json = function ($course) {
+			return array (
+					"course_id" => $course->id,
+					"course_nr" => $course->VeranstaltungsNummer,
+					"title" => $course->name,
+					"folders" => $this->getFolders ( $course->id ) 
+			);
+		};
+		return Course::findAndMapBySQL ( $course_to_json, "JOIN seminar_user USING (Seminar_id) WHERE user_id = ?", array (
 				$GLOBALS ['user']->id 
-		) ) as $course ) {
-			if ($course->start_semester->id == $semester_id) {
-				$result = array (
-						"course_id" => $course->id,
-						"course_nr" => $course->VeranstaltungsNummer,
-						"title" => $course->name,
-						"folders" => $this->getFolders ( $course->id ) 
-				);
-				$output [] = $result;
-			}
-		}
-		
-		return $output;
+		) );
 	}
 	private function getFolders($course_id = null) {
-		$output = array ();
-		
-		// Allgemeine Ordner
-		$general_folders = DocumentFolder::findBySQL ( "seminar_id = ? AND range_id = seminar_id", array (
+		$folder_to_json = function ($folder) {
+			$result = array (
+					"folder_id" => $folder->id,
+					"name" => $folder->name,
+					"mkdate" => $folder->mkdate,
+					"chdate" => $folder->chdate,
+					"permissions" => $folder->permission,
+					"subfolders" => $this->getSubFolders ( $folder->id ),
+					"files" => $this->getDocuments ( $folder->id ) 
+			);
+			
+			$permissions = array ();
+			foreach ( array (
+					1 => 'visible',
+					'writable',
+					'readable',
+					'extendable' 
+			) as $bit => $perm ) {
+				if ($folder->permission & $bit) {
+					$permissions [$perm] = true;
+				} else {
+					$permissions [$perm] = false;
+				}
+			}
+			$result ['permissions'] = $permissions;
+			
+			return $result;
+		};
+		$general_folders = DocumentFolder::findAndMapBySQL ( $folder_to_json, "seminar_id = ? AND range_id = seminar_id", array (
 				$course_id 
 		) );
-		
-		// new top folder
-		$new_top_folders = DocumentFolder::findBySQL ( "seminar_id = ? AND range_id = MD5(CONCAT(?, 'top_folder'))", array (
+		$new_top_folders = DocumentFolder::findAndMapBySQL ( $folder_to_json, "seminar_id = ? AND range_id = MD5(CONCAT(?, 'top_folder'))", array (
 				$course_id,
 				$course_id 
 		) );
-		
-		// statusgruppen Ordner
-		$statusgruppen_folders = DocumentFolder::findBySQL ( "JOIN statusgruppe_user ON (statusgruppe_id = range_id) WHERE seminar_id = ? AND statusgruppe_user.user_id = ?", array (
+		$statusgruppen_folders = DocumentFolder::findAndMapBySQL ( $folder_to_json, "JOIN statusgruppe_user ON (statusgruppe_id = range_id) WHERE seminar_id = ? AND statusgruppe_user.user_id = ?", array (
 				$course_id,
 				$GLOBALS ['user']->id 
 		) );
-		
-		// themen folder
-		$themen_folders = DocumentFolder::findBySQL ( "JOIN themen ON (issue_id = range_id) WHERE range_id = issue_id AND folder.seminar_id = ?", array (
+		$themen_folders = DocumentFolder::findAndMapBySQL ( $folder_to_json, "JOIN themen ON (issue_id = range_id) WHERE range_id = issue_id AND folder.seminar_id = ?", array (
 				$course_id 
 		) );
-		
-		$folders = array_merge_recursive ( $general_folders, $statusgruppen_folders, $themen_folders, $new_top_folders );
-		
-		foreach ( $folders as $folder ) {
-			
-			$result = array (
-					"folder_id" => $folder->id,
-					"name" => $folder->name,
-					"mkdate" => $folder->mkdate,
-					"chdate" => $folder->chdate,
-					"permissions" => $folder->permission,
-					"subfolders" => $this->getSubFolders ( $folder->id ),
-					"files" => $this->getDocuments ( $folder->id ) 
-			);
-			
-			$permissions = array ();
-			foreach ( array (
-					1 => 'visible',
-					'writable',
-					'readable',
-					'extendable' 
-			) as $bit => $perm ) {
-				if ($folder->permission & $bit) {
-					$permissions [$perm] = true;
-				} else {
-					$permissions [$perm] = false;
-				}
-			}
-			$result ['permissions'] = $permissions;
-			$output [] = $result;
-		}
-		
-		return $output;
+		return array_merge_recursive ( $general_folders, $statusgruppen_folders, $themen_folders, $new_top_folders );
 	}
 	private function getSubFolders($folder_id = null) {
-		$output = array ();
-		
-		foreach ( DocumentFolder::findBySQL ( "range_id = ?", array (
-				$folder_id 
-		) ) as $folder ) {
-			
+		$folder_to_json = function ($folder) {
 			$result = array (
 					"folder_id" => $folder->id,
 					"name" => $folder->name,
@@ -258,16 +211,16 @@ class SSFCoreMap extends RESTAPI\RouteMap {
 				}
 			}
 			$result ['permissions'] = $permissions;
-			$output [] = $result;
-		}
-		
-		return $output;
+			
+			return $result;
+		};
+		return DocumentFolder::findAndMapBySQL ( $folder_to_json, "range_id = ?", array (
+				$folder_id 
+		) );
 	}
 	private function getDocuments($folder_id = null) {
-		$output = array ();
-		
-		foreach ( StudipDocument::findByRange_id ( $folder_id ) as $file ) {
-			$result = array (
+		$document_to_json = function ($file) {
+			return array (
 					"document_id" => $file->id,
 					"name" => $file->name,
 					"mkdate" => $file->mkdate,
@@ -277,9 +230,9 @@ class SSFCoreMap extends RESTAPI\RouteMap {
 					"protection" => $file->protected,
 					"mime_type" => get_mime_type ( $file->filename ) 
 			);
-			$output [] = $result;
-		}
-		
-		return $output;
+		};
+		return StudipDocument::findAndMapBySQL ( $document_to_json, "range_id = ?", array (
+				$folder_id 
+		) );
 	}
 }
