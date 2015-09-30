@@ -1,5 +1,5 @@
-pluginname=Stud.IP Client Core API
-pluginclassname=StudIPClientCoreApi
+pluginname=Stud.IP Client REST Core Apps
+pluginclassname=RESTStudipClientPlugin
 origin=de.danner_web
 version=0.2
 studipMinVersion=3.0
