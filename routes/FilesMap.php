@@ -24,7 +24,7 @@ class FilesMap extends RESTAPI\RouteMap {
 	public function getDocumenttreeAll() {
 		return Semester::findAndMapBySQL ( function ($semester) {
 			return $this->getDocumenttree ( $semester->id );
-		}, "JOIN seminare v JOIN seminar_user USING (Seminar_id) WHERE user_id=? AND start_time <= ende AND start_time >=beginn GROUP BY semester_id", array (
+		}, "JOIN seminare v ON (start_time <= ende AND start_time >=beginn) JOIN seminar_user USING (Seminar_id) WHERE user_id=? GROUP BY semester_id", array (
 				$GLOBALS ['user']->id 
 		) );
 	}
@@ -41,7 +41,7 @@ class FilesMap extends RESTAPI\RouteMap {
 	/**
 	 * This route sets the document as downloaded.
 	 *
-	 * @put /studip-client-core/document/:document_id
+	 * @put /studip-client-core/visited_document/:document_id
 	 */
 	public function putDocuments($document_id = null) {
 		if ($document_id != null) {

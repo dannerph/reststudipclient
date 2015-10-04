@@ -3,10 +3,17 @@
 /**
  * RESTStudipClientPlugin.class.php
  *
- * ...
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
  *
  * @author      Philipp Danner <philipp@danner-web.de>
- * @version 0.1a
+ * @license     http://www.gnu.org/licenses/gpl-2.0.html GPL version 2
+ * @category    Stud.IP
+ * @package     StudipClient
+ *
+ * @version 1.0
  */
 
 class RESTStudipClientPlugin extends StudIPPlugin implements RESTAPIPlugin {
@@ -14,7 +21,7 @@ class RESTStudipClientPlugin extends StudIPPlugin implements RESTAPIPlugin {
     /**
      * Load REST Routes
      * 
-     * @return \extendedNews REST Routes
+     * @return \Studip Client REST Routes
      */
     public function getRouteMaps() {
 

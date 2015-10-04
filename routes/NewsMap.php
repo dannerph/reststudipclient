@@ -58,7 +58,7 @@ class NewsMap extends RESTAPI\RouteMap {
 	/**
 	 * Sets the news of the current user with the given $news_id to readed (visisted)
 	 *
-	 * @put /studip-client-core/news/:news_id
+	 * @put /studip-client-core/visited_news/:news_id
 	 */
 	public function putNews($news_id = null) {
 		if ($news_id != null) {
