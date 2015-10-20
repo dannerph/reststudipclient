@@ -55,7 +55,7 @@ class FilesMap extends RESTAPI\RouteMap {
 	 * @get /studip-client-core/documenttree/:semester_id
 	 */
 	public function getDocumenttreeSingle($semester_id) {
-		return $output [] = $this->getDocumenttree ( $semester->id );
+		return $output [] = array($this->getDocumenttree ( $semester_id ));
 	}
 	
 	/**
