@@ -24,7 +24,7 @@ class FilesMap extends RESTAPI\RouteMap {
 	public function getDocumenttreeAll() {
 		return Semester::findAndMapBySQL ( function ($semester) {
 			return $this->getDocumenttree ( $semester->id );
-		}, "JOIN seminare v JOIN seminar_user USING (Seminar_id) WHERE user_id=? AND start_time <= ende AND start_time >=beginn GROUP BY semester_id", array (
+		}, "JOIN seminare v JOIN seminar_user USING (Seminar_id) WHERE user_id=? AND start_time <= ende AND start_time >=beginn GROUP BY semester_id ORDER BY beginn DESC", array (
 				$GLOBALS ['user']->id 
 		) );
 	}
@@ -39,12 +39,13 @@ class FilesMap extends RESTAPI\RouteMap {
 			$result = array (
 					"semester_id" => $semester->id,
 					"title" => $semester->name,
+					"start" => $semester->beginn,
 					"description" => $semester->description
 			);
 			$result ["courses"] = array();
 			
 			return $result;
-		}, "JOIN seminare v JOIN seminar_user USING (Seminar_id) WHERE user_id=? AND start_time <= ende AND start_time >=beginn GROUP BY semester_id", array (
+		}, "JOIN seminare v JOIN seminar_user USING (Seminar_id) WHERE user_id=? AND start_time <= ende AND start_time >=beginn GROUP BY semester_id ORDER BY beginn DESC", array (
 				$GLOBALS ['user']->id 
 		) );
 	}
@@ -81,6 +82,7 @@ class FilesMap extends RESTAPI\RouteMap {
 		$result = array (
 				"semester_id" => $semester->id,
 				"title" => $semester->name,
+				"start" => $semester->beginn,
 				"description" => $semester->description 
 		);
 		$result ["courses"] = $this->getCourses ( $semester->id );
