@@ -62,7 +62,7 @@ class FilesMap extends RESTAPI\RouteMap {
 	/**
 	 * This route sets the document as downloaded.
 	 *
-	 * @put /studip-client-core/document/:document_id
+	 * @put /studip-client-core/visited_document/:document_id
 	 */
 	public function putDocuments($document_id = null) {
 		if ($document_id != null) {
