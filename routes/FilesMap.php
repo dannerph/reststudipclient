@@ -15,7 +15,7 @@
  */
 require_once 'lib/object.inc.php';
 class FilesMap extends RESTAPI\RouteMap {
-		
+	
 	/**
 	 * This route returns a tree of all semesters with leafs: file and nodes: structure.
 	 *
@@ -28,7 +28,7 @@ class FilesMap extends RESTAPI\RouteMap {
 				$GLOBALS ['user']->id 
 		) );
 	}
-
+	
 	/**
 	 * This route returns a list of all semesters without leafs.
 	 *
@@ -40,9 +40,9 @@ class FilesMap extends RESTAPI\RouteMap {
 					"semester_id" => $semester->id,
 					"title" => $semester->name,
 					"start" => $semester->beginn,
-					"description" => $semester->description
+					"description" => $semester->description 
 			);
-			$result ["courses"] = array();
+			$result ["courses"] = array ();
 			
 			return $result;
 		}, "JOIN seminare v JOIN seminar_user USING (Seminar_id) WHERE user_id=? AND start_time <= ende AND start_time >=beginn GROUP BY semester_id ORDER BY beginn DESC", array (
@@ -56,7 +56,9 @@ class FilesMap extends RESTAPI\RouteMap {
 	 * @get /studip-client-core/documenttree/:semester_id
 	 */
 	public function getDocumenttreeSingle($semester_id) {
-		return $output [] = array($this->getDocumenttree ( $semester_id ));
+		return $output [] = array (
+				$this->getDocumenttree ( $semester_id ) 
+		);
 	}
 	
 	/**
@@ -89,13 +91,13 @@ class FilesMap extends RESTAPI\RouteMap {
 		
 		return $result;
 	}
-	
 	private function getCourses($semester_id = null) {
 		$course_to_json = function ($course) use($semester_id) {
 			if ($course->start_semester->id == $semester_id) {
 				return array (
 						"course_id" => $course->id,
 						"course_nr" => $course->VeranstaltungsNummer,
+						"course_type" => $course->getSemType()['name'],
 						"title" => $course->name,
 						"folders" => $this->getFolders ( $course->id ) 
 				);
@@ -108,11 +110,10 @@ class FilesMap extends RESTAPI\RouteMap {
 		$output = array ();
 		foreach ( $result as $item ) {
 			if ($item != null)
-				$output[] = $item;
+				$output [] = $item;
 		}
 		return $output;
 	}
-
 	private function getFolders($course_id = null) {
 		$folder_to_json = function ($folder) {
 			$result = array (
@@ -158,7 +159,6 @@ class FilesMap extends RESTAPI\RouteMap {
 		) );
 		return array_merge_recursive ( $general_folders, $statusgruppen_folders, $themen_folders, $new_top_folders );
 	}
-
 	private function getSubFolders($folder_id = null) {
 		$folder_to_json = function ($folder) {
 			$result = array (
@@ -192,7 +192,6 @@ class FilesMap extends RESTAPI\RouteMap {
 				$folder_id 
 		) );
 	}
-
 	private function getDocuments($folder_id = null) {
 		$document_to_json = function ($file) {
 			return array (
