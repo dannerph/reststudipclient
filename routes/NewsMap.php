@@ -41,16 +41,19 @@ class NewsMap extends RESTAPI\RouteMap {
 		
 		switch ($range) {
 			case 'studip' :
-				return StudipNews::findAndMapBySQL ( $news_to_json, "JOIN news_range r USING (news_id) LEFT JOIN object_user_visits o ON (news_id = o.object_id) WHERE o.object_id IS NULL AND r.range_id = ? GROUP BY news_id", array (
+				return StudipNews::findAndMapBySQL ( $news_to_json, "JOIN news_range r USING (news_id) WHERE NOT EXISTS (SELECT 1 FROM object_user_visits o WHERE o.user_id = ? AND o.object_id = news_id) AND r.range_id = ?", array (
+						$GLOBALS ['user']->id ,
 						'studip' 
 				) );
 			case 'institute' :
-				return StudipNews::findAndMapBySQL ( $news_to_json, "JOIN news_range r USING (news_id) JOIN user_inst i ON (r.range_id = i.Institut_id) LEFT JOIN object_user_visits o ON (news_id = o.object_id) WHERE o.object_id IS NULL AND i.user_id = ? GROUP BY news_id", array (
+				return StudipNews::findAndMapBySQL ( $news_to_json, "JOIN news_range r USING (news_id) WHERE NOT EXISTS (SELECT 1 FROM object_user_visits o WHERE o.user_id = ? AND o.object_id = news_id) AND EXISTS (SELECT 1 FROm user_inst i WHERE r.range_id = i.Institut_id AND i.user_id = ?) AND UNIX_TIMESTAMP(NOW()) < (mkdate + expire)", array (
+						$GLOBALS ['user']->id,
 						$GLOBALS ['user']->id 
 				) );
 			case 'courses' :
-				return StudipNews::findAndMapBySQL ( $news_to_json, "JOIN news_range r USING (news_id) JOIN seminare ON(Seminar_id = range_id) JOIN seminar_user s USING(Seminar_id) LEFT JOIN object_user_visits o ON (news_id = o.object_id) WHERE o.object_id IS NULL AND s.user_id = ? GROUP BY news_id", array (
-						$GLOBALS ['user']->id 
+				return StudipNews::findAndMapBySQL ( $news_to_json, "JOIN news_range r USING (news_id) WHERE NOT EXISTS (SELECT 1 FROM object_user_visits o WHERE o.user_id = ? AND o.object_id = news_id) AND EXISTS (SELECT 1 FROM seminare JOIN seminar_user s USING(Seminar_id) WHERE Seminar_id = r.range_id AND s.user_id = ?) AND UNIX_TIMESTAMP(NOW()) < (mkdate + expire)", array (
+						$GLOBALS ['user']->id,
+						$GLOBALS ['user']->id
 				) );
 		}
 	}
@@ -68,3 +71,5 @@ class NewsMap extends RESTAPI\RouteMap {
 		$this->body ( null );
 	}
 }
+
+
