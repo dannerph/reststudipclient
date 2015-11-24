@@ -12,8 +12,6 @@
  * @license     http://www.gnu.org/licenses/gpl-2.0.html GPL version 2
  * @category    Stud.IP
  * @package     StudipClient
- *
- * @version 1.0
  */
 
 class RESTStudipClientPlugin extends StudIPPlugin implements RESTAPIPlugin {
