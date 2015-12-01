@@ -68,12 +68,29 @@ class FilesMap extends RESTAPI\RouteMap {
 	 */
 	public function putDocuments($document_id = null) {
 		if ($document_id != null) {
-			object_set_visit ( $document_id, 'documents', $GLOBALS ['user']->id );
-			$this->status ( 200 );
+			$document = StudipDocument::find($document_id);
+			if($document == null){
+				$this->status ( 500 );
+				return;
+			}
+			$sem = $document->course;
+			if($sem == null){
+				$this->status ( 500 );
+				return;
+			}
+			$sem_id = $sem->id;
+			if($sem_id != null){
+				object_set_visit ($sem_id, 'documents', $GLOBALS ['user']->id );
+				$this->status ( 200 );
+				return;
+			} else {
+				$this->status ( 500 );
+				return;
+			}
 		} else {
 			$this->status ( 500 );
+			return;
 		}
-		$this->body ( null );
 	}
 	
 	// ************************************************************************//
