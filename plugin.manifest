@@ -1,5 +1,5 @@
 pluginname=Stud.IP Client REST Core Apps
 pluginclassname=RESTStudipClientPlugin
 origin=de.danner_web
-version=1.3
+version=1.4
 studipMinVersion=3.0
